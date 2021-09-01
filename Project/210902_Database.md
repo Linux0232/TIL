@@ -17,10 +17,8 @@
             2-2. 무결성 정의 및 정규화
         3. 물리적(Physical) 모델링
             3-1. 스키마, 테이블 , 인덱스 생성
-    
-    - 부동산 웹사잍트 개발
-    [UseCase]
-    ![Usecase](https://user-images.githubusercontent.com/81960642/131701251-67914c58-4ab4-4a12-8a1e-2d0ac9db5376.JPG)
-    [ERD]
-    ![PROPERTY2](https://user-images.githubusercontent.com/81960642/131701476-1a088680-2da5-4137-995f-9a20ea719a0d.png)
-
+     
+[UseCase]
+![Usecase](https://user-images.githubusercontent.com/81960642/131710033-0fbb9822-de3f-4cef-83fa-a8ae03ef9314.JPG)
+[ERD]
+![PROPERTY2](https://user-images.githubusercontent.com/81960642/131707988-f8dc5756-28f1-4cc3-b992-5644f392a7f8.png)
