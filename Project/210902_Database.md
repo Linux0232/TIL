@@ -20,6 +20,7 @@
     
     - 부동산 웹사잍트 개발
     [UseCase]
-
+    ![Usecase](https://user-images.githubusercontent.com/81960642/131701251-67914c58-4ab4-4a12-8a1e-2d0ac9db5376.JPG)
     [ERD]
-    
+    ![PROPERTY2](https://user-images.githubusercontent.com/81960642/131701476-1a088680-2da5-4137-995f-9a20ea719a0d.png)
+
