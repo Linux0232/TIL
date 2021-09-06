@@ -1,0 +1,613 @@
+# Spring Ioc에 대해서 알아보자.. (XML을 통한 방법)
+
+## 1. Spring Framework이란 무엇인가?
+- Java 엔터프라이즈 개발을 편하게 해주는 Framework이다. 스프링에는 2가지 큰 특징이 있다.
+    1. Ioc(Inversion of Control) bean 객체생성
+        * Ioc란? 단어 그대로 판단해보면 '제어역전'이라는 의미이다. 그렇다면 기존의 방식은 어떠했는지 먼저 알아보는게 중요하다. 
+        자바 객체를 생성하고 객체간의 의존관계를 연결하는 등의 제어권을 개발자가 직접가지고 있었다.
+        코드를 통해서 알아보자.
+
+        * Hello.class
+        ```
+        package sample.classes;
+
+        public class Hello {
+            public void sayHello() {
+                System.out.println("안녕하세요");
+            }
+        }
+
+        ```
+        * Bye.class
+        ```
+        package sample.classes;
+
+        public class Bye {
+            public void sayBye() {
+                System.out.println("안녕히가세요");
+            }
+        }
+        ```
+
+        * MainClass.class
+        ```
+        package sample.main;
+
+        import sample.classes.Bye;
+        import sample.classes.Hello;
+
+        public class MainClass {
+            public static void main(String[] args) {
+                // 안녕하세요를 출력하는 Class
+                Hello sample = new Hello();
+                Hello sample2 = new Hello();
+                
+                say(sample); // 안녕하세요 출력
+                say(sample2); // 안녕하세요 출력
+                // 만약 프로젝트에 변경이 일어나서 Class를 변경해야 될 경우
+                Bye sample3 = new Bye(); // 안녕히가세요 출력
+                Bye sample4 = new Bye(); // 안녕히가세요 출력
+                say2(sample3);
+                say2(sample4);
+            }
+            // static 메소드
+            public static void say(Hello ob) {
+                ob.sayHello();
+            }
+            public static void say2(Bye ob) {
+                ob.sayBye();;
+            }
+        }
+        ```
+        코드에서 처럼 개발자가 직접 객체를 생성하고 객체간의 의존관계를 연결하는 등 제어권을 가지고 있었다. 참고) 의존관계가 많다는 건 프로젝트의 변경으로 변경사항이 생길경우 의존적인 부분이 많기에 하나의 수정으로 여러개를 수정해야한다는 의미이다.
+        그런 부분을 효율적으로 처리하기 위한 방법이 '다형성'과 인터페이스를 사용하는 방법이다.
+        이 부분을 먼저 설명하고 IoC가 어떻게 동작하는지 알아보자.
+        * sample.interface
+        ```
+        package sample.interfaces;
+
+        public interface sample {
+            public void say();
+        }
+        ```
+        * Hello.class
+        ```
+        package sample.classes;
+        import sample.interfaces.sample;
+
+        public class Hello implements sample{
+            public void say() {
+                System.out.println("안녕하세여");
+            }
+        }
+        ```
+        * Bye.class
+        ```
+        package sample.classes;
+        import sample.interfaces.sample;
+
+        public class Bye implements sample{
+            public void say() {
+                System.out.println("안녕히가세요");
+            }
+
+        }
+        ```
+        * MainClass.class
+        ```
+        package sample.main;
+
+        import sample.classes.Bye;
+        import sample.classes.Hello;
+        import sample.interfaces.sample;
+
+        public class MainClass {
+            public static void main(String[] args) {
+                // 안녕하세요를 출력하는 Class
+                sample sample = new Hello();
+                sample sample2 = new Hello();
+                
+                callSay(sample); // 안녕하세요 출력
+                callSay(sample2); // 안녕하세요 출력
+                // 만약 프로젝트에 변경이 일어나서 Class를 변경해야 될 경우
+                sample sample3 = new Bye(); // 안녕히가세요 출력
+                sample sample4 = new Bye(); // 안녕히가세요 출력
+                callSay(sample3);
+                callSay(sample4);
+            }
+            // static 메소드
+            public static void callSay(sample ob) {
+                ob.say();
+            }
+        }
+        ```
+        위 2개의 코드의 공통점을 보면 개발자가 직접 객체를 생성하거나 의존관계를 제어권을 가지고 있다. 차이점은 의존관계를 얼마나 줄이냐의 차이다. '인터페이스' '다형성'을 사용하면 의존 관계를 낮출 수 있다.
+        첫번째 코드의 경우 변경사항이 발생할 경우 참조변수 타입과 객체 클래쓰도 변경해주어야 하지만 두번째 코드의 경우 참조변수는 인터페이스 타입으로 함으로써 객체생성 클래쓰만 변경해주면 된다.
+
+        이번에는 Ioc container가 XML을 통해서 객체를 만들고 주입하는 방법을 알아보자.
+        
+        ClassPathXmlApplicationContext 클래쓰를 통해서 Ioc 컨테이너를 생성할 수 있다. 하지만 ClassPathXmlApplicationContext클래쓰는 기본적인 JDK에서 제공하는 부분이 아니고 Spring Framework에서 제공하는 라이브러리이다. 그렇기에 Maven 프로젝트를 생성해서 pom.xml을 통해서 라이브러리를 다운로드 받아야한다.
+        ```
+        <properties>
+                
+            <!-- 스프링 버전 -->
+            <org.springframework-version>5.3.9</org.springframework-version>
+        </properties>
+
+        <dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>${org.springframework-version}</version>
+		</dependency>
+        ```
+        Ioc container가 XML를 읽어드리고 XML에 <bean>에 지정되어 있는 .class파일을 읽어드려 객체를 생성해서 돌려준다. 자세히 코드를 작성해서 알아보자.
+        pom.xml을 생략하겠다.
+        * Ioc container XML을 이용해 Bean 객체 생성하기
+        * beans.xml
+        ```
+        <?xml version="1.0" encoding="UTF-8"?>
+        <beans xmlns="http://www.springframework.org/schema/beans"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.springframework.org/schema/beans
+                http://www.springframework.org/schema/beans/spring-beans.xsd">
+                
+            <bean class="sample.classes.Hello" />
+        </beans>
+        ```
+        * Hello.class
+        ```
+        package sample.classes;
+        import sample.interfaces.sample;
+
+        public class Hello implements sample{
+            public Hello() {
+                System.out.println("Hello.class 생성자 입니다.");
+            }
+            public void say() {
+                System.out.println("안녕하세여");
+            }
+        }
+        ```
+        * sample.interface
+        ```
+        package sample.interfaces;
+
+        public interface sample {
+            public void say();
+        }
+        ```
+        * MainClass.class
+        ```
+        package sample.main;
+        import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+        public class MainClass {
+            public static void main(String[] args) {
+                
+                // Ioc Container 생성
+                ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("sample/config/beans.xml");
+                
+                // Ioc Container 닫음
+                ctx.close();	
+            }
+        }
+        ```
+        동작원리는 MainClass.class 실행되면서 ClassPathXmlApplicationContext클래쓰를 통해서 Ioc container가 만들어지고 beans.xml을 읽어드리고 beans.xml에 있는 bean을 통해서 해당 클래쓰도 읽어드려 객체를 만든다. 하지만 객체를 생성 후 그에 해당하는 객체 주소값을 MainClass.class에서 사용하기 위해서는 그 객체가 어떤 객체인지 식별 할 수 있는 id 속성이 있어야한다. 하지만 작성된 beans.xml에는 id 속성이 정의 되어 있지 않다. 이번에는 beans.xml의 bean에 id 속성을 넣어서 MainClass.class에서 객체를 가져오는 방법을 알아보자.
+        참고) 변경되는 부분만 작성할 예정이니 작성되지 않는 부분은 동일하다고 생각하면 된다.
+        * beans.xml (id 속성 추가)
+        ```
+        <?xml version="1.0" encoding="UTF-8"?>
+        <beans xmlns="http://www.springframework.org/schema/beans"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.springframework.org/schema/beans
+                http://www.springframework.org/schema/beans/spring-beans.xsd">
+                
+            <bean id="a1" class="sample.classes.Hello" />
+        </beans>    
+        ```
+        * MainClass.class
+        ```
+        package sample.main;
+        import org.springframework.context.support.ClassPathXmlApplicationContext;
+        import sample.classes.Hello;
+
+        public class MainClass {
+            public static void main(String[] args) {
+                
+                // Ioc Container 생성
+                ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("sample/config/beans.xml");
+                // Ioc Container로 부터 getBean() 메소드를 통해서 객체 주소값을 받아온다. 
+                // 참고) 받아온 객체와 참조변수에 넣을 타입과 동일해야한다. 객체 주소를 받아올 떄 타입을 정하지 않으면 기본 Object타입이다.
+                Hello a = ctx.getBean("a1", Hello.class);
+                Object b = ctx.getBean("a1");
+                // getBean() 메소드를 통해서 2번 가져오면 객체가 또 생성되는게 아니라 같은 객체를 반환하는 것을 알 수 있다. (싱글톤이라 생각하면 된다.)
+                System.out.println(a);
+                System.out.println(b);
+                // Ioc Container 닫음
+                ctx.close();	
+            }
+        }
+        ```
+        연습삼아 bean을 여러개 생성해서 가져와보고 bean속성 중에 lazy-init이라는 속성을 알아보자.
+        
+        * Hello.class
+        ```
+        package sample.classes;
+        import sample.interfaces.sample;
+
+        public class Hello implements sample{
+            public Hello() {
+                System.out.println("Hello.class 생성자 입니다.");
+            }
+            public void say() {
+                System.out.println("안녕하세여");
+            }
+        }
+        ```
+        * Bye.class
+        ```
+        package sample.classes;
+        import sample.interfaces.sample;
+
+        public class Bye implements sample{
+            // 기본생성자
+            public Bye() {
+                System.out.println("Bye.class 생성자 입니다.");
+            }
+            public void say() {
+                System.out.println("안녕히가세요");
+            }
+        }
+        ```
+        * GoodNight.class
+        ```
+        package sample.classes;
+
+        public class GoodNight {
+            public GoodNight() {
+                System.out.println("GoodNight.class의 생성자 입니다.");
+            }
+            public void say() {
+                System.out.println("잘자요");
+            }
+        }
+        ```
+        * beans.xml
+        ```
+        <?xml version="1.0" encoding="UTF-8"?>
+        <beans xmlns="http://www.springframework.org/schema/beans"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.springframework.org/schema/beans
+                http://www.springframework.org/schema/beans/spring-beans.xsd">
+                
+            <bean id="a1" class="sample.classes.Hello" />
+            <bean id="a2" class="sample.classes.Bye"/>
+            <bean id="a3" class="sample.classes.GoodNight" lazy-init="true"/>
+        </beans>
+        ```
+        * MainClass.class
+        ```
+        package sample.main;
+
+        import org.springframework.context.support.ClassPathXmlApplicationContext;
+        import sample.classes.Bye;
+        import sample.classes.GoodNight;
+        import sample.classes.Hello;
+
+        public class MainClass {
+            public static void main(String[] args) {
+                
+                // Ioc Container 생성
+                ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("sample/config/beans.xml");
+                // Ioc Container로 부터 getBean() 메소드를 통해서 객체 주소값을 받아온다. 
+                // 참고) 받아온 객체와 참조변수에 넣을 타입과 동일해야한다. 객체 주소를 받아올 떄 타입을 정하지 않으면 기본 Object타입이다.
+                Hello a = ctx.getBean("a1", Hello.class);
+                Object b = ctx.getBean("a1");
+                // getBean() 메소드를 통해서 2번 가져오면 객체가 또 생성되는게 아니라 같은 객체를 반환하는 것을 알 수 있다.
+                System.out.println(a);
+                System.out.println(b);
+                
+                Bye c = ctx.getBean("a2", Bye.class);
+                System.out.println(c);
+                
+                //GoodNight d = ctx.getBean("a3", GoodNight.class);
+                // Ioc Container 닫음
+                ctx.close();	
+            }
+        }
+        ```
+        Ioc container는 기본적 XML을 읽어드리면서 객체를 생성하는데 그 이유는 lazy-init="false"이기에 그렇다. 그것을 확인하는 방법은 .class마다 생성자에 문자열을 출력하는 코드를 작성하고 MainClass.class에서 Ioc container만 만들고 출력해보면 알 수 있다.
+        여기서, getBean() 메소드를 실행했을 때 객체를 만들 수 있도록하는 방법이 있는데 그것이 바로 lazy-init="true"로 변경하는 방법이다. 그렇게 되면 MainClass.class에서 getBean() 메소드가 실행되었을 때만 객체를 생성하고 그 주소 값을 반환 받을 을 수 있다.
+        (lazy-init 속성을 사용 안하면 기본적으로 false 이다.) 이번에는 bean 속성 중에 'scope'라는 속성을 알아보자.
+        scope="singleton" - 객체를 하나만 생성해서 사용한다.
+        scope="prototype" - 객체를 가져올 떄 마다 객체를 생성한다. (XML을 읽어드리면서 객체를 만드는 게 아니라 getBean() 메소드를 실행할 때 마다 객체를 만들고 객체 주소값을 전달한다.)
+        scope속성을 사용 안하면 singleton이다.
+
+        * beans.xml
+        ```
+        <?xml version="1.0" encoding="UTF-8"?>
+        <beans xmlns="http://www.springframework.org/schema/beans"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.springframework.org/schema/beans
+                http://www.springframework.org/schema/beans/spring-beans.xsd">
+                
+            <bean id="a1" class="sample.classes.Hello" />
+            <bean id="a2" class="sample.classes.Bye"/>
+            <bean id="a3" class="sample.classes.GoodNight" lazy-init="true"/>
+            <bean id="a4" class="sample.classes.GoodNight" scope="prototype"/>
+        </beans>
+        ```
+        * MainClass.class
+        ```
+        package sample.main;
+
+        import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+        import sample.classes.Bye;
+        import sample.classes.GoodNight;
+        import sample.classes.Hello;
+        import sample.interfaces.sample;
+
+        public class MainClass {
+            public static void main(String[] args) {
+                
+                // Ioc Container 생성
+                ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("sample/config/beans.xml");
+                // Ioc Container로 부터 getBean() 메소드를 통해서 객체 주소값을 받아온다. 
+                // 참고) 받아온 객체와 참조변수에 넣을 타입과 동일해야한다. 객체 주소를 받아올 떄 타입을 정하지 않으면 기본 Object타입이다.
+                Hello a = ctx.getBean("a1", Hello.class);
+                Object b = ctx.getBean("a1");
+                // getBean() 메소드를 통해서 2번 가져오면 객체가 또 생성되는게 아니라 같은 객체를 반환하는 것을 알 수 있다.
+                System.out.println(a);
+                System.out.println(b);
+                
+                Bye c = ctx.getBean("a2", Bye.class);
+                System.out.println(c);
+                GoodNight d = ctx.getBean("a3", GoodNight.class);
+                
+                GoodNight e = ctx.getBean("a4", GoodNight.class);
+                GoodNight f = ctx.getBean("a4", GoodNight.class);
+                System.out.println(e); // 같은 객체가 아니라 다른객체 주소를 출력하는 것을 확인 할 수 있다.
+                System.out.println(f); // 같은 객체가 아니라 다른객체 주소를 출력하는 것을 확인 할 수 있다.
+                // Ioc Container 닫음
+                ctx.close();	
+            }
+        }
+        ```
+    2. Ioc(Inversion of Control) bean 객체의 생명주기
+        * bean 객체의 생명주기란? - 아까 우리가 bean 객체가 생성되는 방법에 대해서 배웠는데요. 
+        1-1. beans.xml을 읽어드릴 때 싱글톤으로 객체를 생성하는 방법
+        1-2. beans.xml을 읽어드릴 때가 아니라 lazy-init 속성을 사용해서 getBean()메소드를 호출 했을 때 싱글톤으로 객체를 생성하는 방법
+        1-3. beans.xml을 읽어 드릴 때가 아니라 scope="prototype"일 경우 getBean()메소드를 생성할 때 싱글톤 타입이 아닌 매번 새로운 객체를 생성하는 방법
+        3가지를 배웠고 ctx.close()를 할 경우 Ioc container가 없어지면 객체가 사라진다. 그 경우 bean 생명주기가 끝났다라고 생각하면 된다.
+        이번에는 객체가 생성될 때 어떤 메소드를 호출하라고 지정 할 수 있고 객체가 없어질 때 어떤 메소드를 호출하라고 지정할 수 있다. 그 사항에 대해서 코드를 통해 알아보자.
+        * bean 생명주기에서 init-method, destroy-method
+        * beans.xml        
+        ```
+        <?xml version="1.0" encoding="UTF-8"?>
+        <beans xmlns="http://www.springframework.org/schema/beans"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.springframework.org/schema/beans
+                http://www.springframework.org/schema/beans/spring-beans.xsd">
+                
+            <bean id="tb1" class="sample.beans.TestBean1" lazy-init="true" init-method="init_say" destroy-method="destroy_say"/>		
+        </beans>
+        ```
+        * TestBean1.class
+        ```
+        package sample.beans;
+        public class TestBean1 implements introduce{
+            public TestBean1() {
+                System.out.println("TestBean1 생성자 입니다.");
+            }
+            @Override
+            public void say() {
+                System.out.println("TestBean의 say 메소드입니다.");
+            }
+            public void init_say() {
+                System.out.println("TestBean1 init 메소드입니다.");
+            }
+            public void destroy_say() {
+                System.out.println("TestBean1 destroy 메소드입니다.");
+            }
+        }
+        ```
+        * MainClass.class
+        ```
+        package sample.main;
+
+        import org.springframework.context.support.ClassPathXmlApplicationContext;
+        import sample.beans.TestBean1;
+
+        public class MainClass {
+            public static void main(String[] args) {
+                ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("sample/config/beans.xml");
+                // lazy-init의 값이 'true'이기 때문에 객체 생성시 bean.xml에 init 메소드 지정했기에 그 메소드가 호출된다.
+                TestBean1 testbean1 = ctx.getBean("tb1", TestBean1.class);
+                System.out.println(testbean1);
+                testbean1.say();
+                // Ioc container가 없어지면 객체가 사라지게 되는 그때 destroy 메소드 지정했기에 그 메소드가 호출된다.
+                ctx.close();
+            }
+        }
+        ```
+        * bean 생명주기에서 default-init-method, default-destroy-method
+        * beans.xml
+        ```
+        <?xml version="1.0" encoding="UTF-8"?>
+        <beans xmlns="http://www.springframework.org/schema/beans"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.springframework.org/schema/beans
+                http://www.springframework.org/schema/beans/spring-beans.xsd"
+            default-init-method="default_init_say" default-destroy-method="default_destroy_say">
+                
+            <bean id="tb1" class="sample.beans.TestBean1" lazy-init="true" init-method="init_say" destroy-method="destroy_say"/>
+            <bean id="tb2" class="sample.beans.TestBean2" lazy-init="true" />		
+        </beans>
+        ```
+        * TestBean2.class
+        ```
+        package sample.beans;
+
+        public class TestBean2 implements introduce{
+            public TestBean2 () {
+                System.out.println("TestBean2의 생성자 입니다.");
+            }
+            @Override
+            public void say() {
+                System.out.println("TestBean2의 say 메소드입니다.");
+            }
+            public void default_init_say() {
+                System.out.println("TestBean2의 default-init 메소드입니다.");
+            }
+            public void default_destroy_say() {
+                System.out.println("TestBean2의 default-destroy 메소드입니다.");
+            }
+        }
+        ```
+        * MainClass.class
+        ```
+        package sample.main;
+
+        import org.springframework.context.support.ClassPathXmlApplicationContext;
+        import sample.beans.TestBean1;
+        import sample.beans.TestBean2;
+
+        public class MainClass {
+            public static void main(String[] args) {
+                ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("sample/config/beans.xml");
+                // lazy-init의 값이 'true'이기 때문에 객체 생성시 bean.xml에 init 메소드 지정했기에 그 메소드가 호출된다.
+                TestBean1 testbean1 = ctx.getBean("tb1", TestBean1.class);
+                System.out.println(testbean1);
+                testbean1.say();
+                
+                TestBean2 testbean2 = ctx.getBean("tb2", TestBean2.class);
+                System.out.println("tb2:" + testbean2);
+                testbean2.say();
+                // Ioc container가 없어지면 객체가 사라지게 되는 그때 destroy 메소드 지정했기에 그 메소드가 호출된다.
+                ctx.close();
+            }
+        }
+        ```
+        beans.xml의 bean에 init-method를 설정하지 않더라도 객체가 생성될 때 어떤 메소드를 실행되도록하는 방법이 있는데 그게 바로 'default-init-method'이다 destroy메소드도 마찬가지 이다.
+        여기서 주의사항이 있는데 (만약 init-method,destroy-method,default-init-method,default-destroy-method 4개 지정하고 beans.xml에도 4개 다 사용하도록 되어 있다면 우선순위는 bean에 적혀지는 init-method와 destroymethod가 우선된다.)
+        또, class파일에는 아무것도 작성하지 않았고 beans.xml에 default-init-method와 default-destroy-method만 작성 된 경우 무시되지만 bean에 .class에 작성되지 않은 init-method나 destroy-method를 적을 경우 에러가 발생한다.
+    3. Ioc(Inversion of Control) bean 객체의 생명주기 BeanPostProcessor에 대해서
+    - Spring Framework에서는 어떠한 작업이 동작하도록 개발자가 설정해놨을 경우 그것을 가로채서 다른 일을 처리할 수 있게 해준다. 그 중에 하나가 BeanPostProcessor이다. 어떤 예시에서 사용되는지는 아직 더 공부가 필요하다.
+    우리가 위에서 bean객체를 정의 할 때 init-method 속성을 사용하면 객체가 생성될 때 init-method가 자동으로 호출되도록 할 수 있었습니다. 이번에는 init-method가 실행되기 전에 어떠 한 일을 처리 할 수 있도록 하는 방법과 init-method가 호출된 이후 어떠한 일을 할 수 있도록 하는 방법이 있다. 그 방법은 BeanPostProcessor라는 'interface'를 구현해서 'postProcessBeforeInitialization'을 사용하는 방법 'postProcessAfterInitialization'을 하는 방법이 있다.
+        
+        * beans.xml
+        ```
+        <?xml version="1.0" encoding="UTF-8"?>
+        <beans xmlns="http://www.springframework.org/schema/beans"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.springframework.org/schema/beans
+                http://www.springframework.org/schema/beans/spring-beans.xsd">
+                
+            <bean id="t1" class="sample.beans.TestBean1" lazy-init="true" init-method="init_say"/>
+            <bean id="t2" class="sample.beans.TestBean2" lazy-init="true" init-method="init_say"/>
+            <bean class="sample.processor.processor"/>
+        </beans>
+        ```
+        * TestBean1.class
+        ```
+        package sample.beans;
+
+        public class TestBean1 {
+            public TestBean1() {
+                System.out.println("TestBean1의 생성자입니다.");
+            }
+            public void say() {
+                System.out.println("TestBean1의 say 메소드입니다.");
+            }
+            public void init_say() {
+                System.out.println("TestBean1의 init 메소드입니다.");
+            }
+            public void destroy_say() {
+                System.out.println("TestBean1의 destroy 메소드입니다.");
+            }
+        }
+        ```
+        * TestBean2.class
+        ```
+        package sample.beans;
+
+        public class TestBean2 {
+            public TestBean2() {
+                System.out.println("TestBean2의 생성자");
+            }
+            public void say() {
+                System.out.println("TestBean2의 메소드입니다.");
+            }
+            public void init_say() {
+                System.out.println("TestBean2의 init 메소드입니다.");
+            }
+            public void destroy_say() {
+                System.out.println("TestBean2의 destroy 메소드입니다.");
+            }
+        }
+        ```
+        * processor.class
+        ```
+        package sample.processor;
+
+        import org.springframework.beans.BeansException;
+        import org.springframework.beans.factory.config.BeanPostProcessor;
+
+        public class processor implements BeanPostProcessor{
+            public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+                System.out.println("before");
+                switch(beanName) {
+                case "t1":
+                    System.out.println("id가 t1인 bean객체 생성");
+                    break;
+                case "t2":
+                    System.out.println("id가 t2인 bean객체 생성");
+                    break;
+                }
+                return bean;
+            }
+            public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+                System.out.println("after");
+                return bean;
+            }
+        }
+        ```
+        * MainClass.class
+        ```
+        package MainClass;
+
+        import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+        import sample.beans.TestBean1;
+        import sample.beans.TestBean2;
+
+        public class MainClass {
+            public static void main(String[] args) {
+                
+                ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("sample/config/beans.xml");
+                TestBean1 testbean1 = ctx.getBean("t1", TestBean1.class);
+                System.out.println(testbean1);
+                System.out.println("--------------------------------------");
+                TestBean2 testbean2 = ctx.getBean("t2", TestBean2.class);
+                System.out.println(testbean2);
+                ctx.close();
+            }
+        }
+        ```
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+    
