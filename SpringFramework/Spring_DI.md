@@ -1,8 +1,8 @@
-# Spring Ioc에 대해서 알아보자.. (XML을 통한 방법)
+# Spring DI에 대해서 알아보자.. (XML을 통한 방법)
 
 ## 1. Spring Framework이란 무엇인가?
 - Java 엔터프라이즈 개발을 편하게 해주는 Framework이다. 스프링에는 2가지 큰 특징이 있다.
-    1. Ioc(Inversion of Control) bean 객체생성
+    1. DI(Dependency Injection) bean 객체생성
         * DI(Dependency Injection)란? 단어 그대로 판단해보면 '의존성주입'이라는 의미이다. 그렇다면 기존의 방식은 어떠했는지 먼저 알아보는게 중요하다. 
         Ioc container를 통해서 개발자가 직접 객체를 생성하는게 아니라 Spring Framework가 그러한 역할을 대신 해준다고 이야기 했었는데요. Ioc가 객체를 생성할 때 Spring Framework가 Dependency를 대신 주입해준다.(의존성을 줄여주면서 유지보수가 용이하다.) 먼저 생성자를 통한 DI를 코드로 알아보자. (Spring Framework을 썻을 때와 아닐 때를 비교하면서 살펴보겠다.)
 
