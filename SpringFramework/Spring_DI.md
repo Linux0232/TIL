@@ -288,8 +288,354 @@
         ```
         여기서 id속성에 databean이라고 적힌 bean객체 중 scope="prototype"을 적은게 있는게 사용한 이유는 우리가 저번에 배웠다 싶이 scope="prototype"을 작성하게 되면 이 속성이 적힌 bean 참조할 때 마다 객체가 새로 생성된다.이러한 특징을 이용해서 constructor-arg가 databean이라는 id를 가진 bean을 참조해서 주입을 해주기 때문에 결과적으로 d1과 d2는 다른 객체이다. prototype을 작성하지 않을 경우 같은 객체가 주입된다. 중요 !!
 
+        * Setter 메서드를 통한 값 DI(Java를 이용해서 직접할 경우)
+        * TestBean1.class
+        ```
+        package sample.beans;
 
+        public class TestBean1 {
+            private int data1;
+
+            public TestBean1() {
+            }
+            
+            public int getData1() {
+                return data1;
+            }
+            
+            public void setData1(int data1) {
+                this.data1 = data1;
+            }
+        ```
+        * MainClass.class
+        ```
+        package sample.main;
+
+        import sample.beans.TestBean1;
+
+        public class MainClass {
+            public static void main(String[] args) {
+                TestBean1 t1 = new TestBean1();
+                t1.setData1(100);
+                System.out.printf("t1.data1 : %s\n", t1.getData1());
+            }
+        }
+        ```
+        * Setter 메서드를 통한 값 DI를 통해
+        * beans.xml
+        ```
+        <?xml version="1.0" encoding="UTF-8"?>
+        <beans xmlns="http://www.springframework.org/schema/beans"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.springframework.org/schema/beans
+                http://www.springframework.org/schema/beans/spring-beans.xsd">
+            <bean id="testbean1" class="sample.beans.TestBean1" lazy-init="true">
+                <property name="data1" value="100"/>
+            </bean>
+        </beans>
+        ```
+        * TestBean1.class
+        ```
+        package sample.beans;
+
+        public class TestBean1 {
+            private int data1;
+            
+            public TestBean1() {
+            }
+
+            public int getData1() {
+                return data1;
+            }
+            
+            public void setData1(int data1) {
+                this.data1 = data1;
+            }
+        }
+        ```
+        * MainClass.class
+        ```
+        package sample.main;
+
+        import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+        import sample.beans.TestBean1;
         
+        public class MainClass {
+            public static void main(String[] args) {
+                ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("sample/config/beans.xml");
+                TestBean1 testbean1 = ctx.getBean("testbean1", TestBean1.class);
+                System.out.printf("testbean1.data1 : %s\n", testbean1.getData1());
+                ctx.close();
+            }
+        }
+        ```
+        동작원리는 Ioc container에서 getBean()메소드를 호출하면 객체를 생성하는데(bean속성 lazy-init때문) TestBean.class의 필드가 private 접근자이기에 데이터를 초기화 하기 위해서는 setter를 이용해서 초기화해야된다. 그것을 개발자가 직접할 수도 있지만 Spring Framework라이브러리를 이용해서 xml을 통해서 할 수 있다. bean에서 property에서 name속성을 사용하면 된다. 그러면 name="data1"속성에 들어가 데이터를 이용해서 setData1로 바꿔서 해당 메소드에 property에 작성된 value 값을 넣는다. (name 속성 앞에 set+대문자로해서 해당메소드를 찾아간다.)        
+        * Setter 메서드를 통한 객체 DI(Java를 이용해서 직접할 경우)
+        * DataBean.class
+        ```
+        package sample.beans;
+
+        public class DataBean {
+            private String name;
+
+            public DataBean() {
+            }
+
+            public String getName() {
+                return name;
+            }
+
+            public void setName(String name) {
+                this.name = name;
+            }
+            
+        }
+        ```
+        * TestBean1.class
+        ```
+        package sample.beans;
+
+        public class TestBean1 {
+            private int data1;
+            private DataBean data2;
+            
+            public TestBean1() {
+            }
+            
+            public DataBean getData2() {
+                return data2;
+            }
+
+            public void setData2(DataBean data2) {
+                this.data2 = data2;
+            }
+
+            public int getData1() {
+                return data1;
+            }
+            
+            public void setData1(int data1) {
+                this.data1 = data1;
+            }
+        }
+        ```
+        * MainClass.class
+        ```
+        package sample.main;
+
+        import sample.beans.DataBean;
+        import sample.beans.TestBean1;
+
+        public class MainClass {
+            public static void main(String[] args) {
+                TestBean1 t1 = new TestBean1();
+                DataBean d1 = new DataBean();
+                t1.setData2(d1);
+                System.out.printf("t1.data2 : %s\n", t1.getData2());
+            }
+        }
+        ```
+        * Setter 메서드를 통한 객체 DI를 통해
+        * beans.xml
+        ```
+        <?xml version="1.0" encoding="UTF-8"?>
+        <beans xmlns="http://www.springframework.org/schema/beans"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.springframework.org/schema/beans
+                http://www.springframework.org/schema/beans/spring-beans.xsd">
+            <bean id="testbean1" class="sample.beans.TestBean1" lazy-init="true">
+                <property name="data2">
+                    <bean class="sample.beans.DataBean"></bean>
+                </property>
+            </bean>
+        </beans>
+        ```
+        * DataBean.class
+        ```
+        package sample.beans;
+
+        public class DataBean {
+            private String name;
+
+            public DataBean() {
+            }
+
+            public String getName() {
+                return name;
+            }
+
+            public void setName(String name) {
+                this.name = name;
+            }
+        }
+        ```
+        * TestBean1.class
+        ```
+        package sample.beans;
+
+        public class TestBean1 {
+            private int data1;
+            private DataBean data2;
+            
+            public TestBean1() {
+            }
+            
+            public DataBean getData2() {
+                return data2;
+            }
+
+            public void setData2(DataBean data2) {
+                this.data2 = data2;
+            }
+
+            public int getData1() {
+                return data1;
+            }
+            
+            public void setData1(int data1) {
+                this.data1 = data1;
+            }
+        }
+        ```
+        * MainClass.class
+        ```
+        package sample.main;
+
+        import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+        import sample.beans.TestBean1;
+
+        public class MainClass {
+            public static void main(String[] args) {
+                ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("sample/config/beans.xml");
+                TestBean1 testbean1 = ctx.getBean("testbean1", TestBean1.class);
+                System.out.printf("testbean1.data2 : %s\n", testbean1.getData2());
+                ctx.close();
+            }
+        }
+        ```
+        * Setter 메서드를 통한 객체 DI를 통해 이미 만들어진 객체 주입
+        * beans.xml
+        ```
+        <?xml version="1.0" encoding="UTF-8"?>
+        <beans xmlns="http://www.springframework.org/schema/beans"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.springframework.org/schema/beans
+                http://www.springframework.org/schema/beans/spring-beans.xsd">
+                
+            <bean id="databean" class="sample.beans.DataBean"></bean>
+                
+            <bean id="testbean1" class="sample.beans.TestBean1" lazy-init="true">
+                <property name="data2" ref="databean"></property>
+                <property name="data3" ref="databean"></property>
+            </bean>
+        </beans>
+        ```
+        * TestBean.class
+        ```
+        package sample.beans;
+
+        public class TestBean1 {
+            private int data1;
+            private DataBean data2;
+            private DataBean data3;
+            
+            public TestBean1() {
+            }
+            
+            public DataBean getData3() {
+                return data3;
+            }
+
+            public void setData3(DataBean data3) {
+                this.data3 = data3;
+            }
+
+            public DataBean getData2() {
+                return data2;
+            }
+
+            public void setData2(DataBean data2) {
+                this.data2 = data2;
+            }
+
+            public int getData1() {
+                return data1;
+            }
+            
+            public void setData1(int data1) {
+                this.data1 = data1;
+            }
+        }
+        ```
+        * MainClass.class
+        ```
+        package sample.main;
+
+        import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+        import sample.beans.TestBean1;
+
+        public class MainClass {
+            public static void main(String[] args) {
+                ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("sample/config/beans.xml");
+                TestBean1 testbean1 = ctx.getBean("testbean1", TestBean1.class);
+                System.out.printf("testbean1.data2 : %s\n", testbean1.getData2());
+                System.out.printf("testbean1.data3 : %s\n", testbean1.getData3());
+                ctx.close();
+            }
+        }
+        ```
+        MainClass에서 보다 싶이 객체2개를 넣어서 출력해보면 같은 객체인 것을 확인 할 수 있다.
+        이미 만들객체를 사용할 때 scope속성을 사용 안할 경우 기본적으로 싱글톤이기 때문이다.
+        다른 객체를 넣으려면 bean에 scope="prototype"을 넣으면 된다.
+        코드를 통해 알아보자.
+        * beans.xml
+        ```
+        <?xml version="1.0" encoding="UTF-8"?>
+        <beans xmlns="http://www.springframework.org/schema/beans"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.springframework.org/schema/beans
+                http://www.springframework.org/schema/beans/spring-beans.xsd">
+                
+            <bean id="databean" class="sample.beans.DataBean" scope="prototype"></bean>
+                
+            <bean id="testbean1" class="sample.beans.TestBean1" lazy-init="true">
+                <property name="data2" ref="databean"></property>
+                <property name="data3" ref="databean"></property>
+            </bean>
+        </beans>
+        ```
+        * MainClass.class
+        ```
+        package sample.main;
+
+        import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+        import sample.beans.TestBean1;
+
+        public class MainClass {
+            public static void main(String[] args) {
+                ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("sample/config/beans.xml");
+                TestBean1 testbean1 = ctx.getBean("testbean1", TestBean1.class);
+                System.out.printf("testbean1.data2 : %s\n", testbean1.getData2());
+                System.out.printf("testbean1.data3 : %s\n", testbean1.getData3());
+                ctx.close();
+            }
+        }
+        ```
+
+
+
+
+
+
+
+
+
+
+
 
 
 
